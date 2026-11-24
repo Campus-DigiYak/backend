@@ -1,5 +1,8 @@
 package com.digiyak.delivery.domain;
 
+/**
+ * Domain enumerations governing delivery channels, package types, payment modes, and lifecycle states.
+ */
 public final class DeliveryEnums {
 
     private DeliveryEnums() {
@@ -26,6 +29,7 @@ public final class DeliveryEnums {
         PHYSICAL_CASH,
         VENDOR_WALLET;
 
+        /** Postpaid modes dispatch before payment and are blocked if {@code allowPostpaid == false}. */
         public boolean isPostpaid() {
             return this == MOMO_PAY_AFTER_DELIVERY || this == PHYSICAL_CASH;
         }

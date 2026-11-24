@@ -14,6 +14,16 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
 
+/**
+ * Shareable 1-tap MoMo payment link entity in {@code delivery.payment_links}.
+ *
+ * <p>Used in two scenarios:
+ * <ol>
+ *   <li>Campus vendors sending a WhatsApp checkout link to a student buyer ({@code VENDOR_PAY_LINK}).</li>
+ *   <li>Runners requesting Pay-After-Delivery MoMo payment at the hostel gate ({@code AWAITING_HANDOFF_PAYMENT}).</li>
+ * </ol>
+ * Links expire automatically after {@link #DEFAULT_TTL} (30 minutes).
+ */
 @Entity
 @Table(name = "payment_links", schema = "delivery")
 public class PaymentLink {
@@ -69,6 +79,7 @@ public class PaymentLink {
         return now.isAfter(this.expiresAt);
     }
 
+    /** Idempotently marks the link paid; ignores duplicate webhook deliveries if already {@code PAID}. */
     public void markPaid() {
         if (this.status == PayLinkStatus.PAID) {
             return;

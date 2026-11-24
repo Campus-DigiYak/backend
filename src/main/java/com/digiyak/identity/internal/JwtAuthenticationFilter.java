@@ -16,6 +16,14 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.List;
 
+/**
+ * Servlet filter executed once per HTTP request before Spring Security's authorization checks.
+ *
+ * <p>Extracts {@code Authorization: Bearer <jwt>}, verifies its HMAC signature and expiry via
+ * {@link JwtTokenProvider}, and stores an {@link AuthenticatedUser} principal with {@code ROLE_*}
+ * authorities into {@link SecurityContextHolder}. Invalid tokens clear the context so protected
+ * endpoints return 401/403 while public routes still work cleanly.
+ */
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
@@ -38,6 +46,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String rawToken = header.substring(BEARER_PREFIX.length()).trim();
             try {
                 AuthenticatedUser user = jwtTokenProvider.parseAndVerify(rawToken);
+                // Spring Security's hasRole('RUNNER') expects the "ROLE_" prefix on GrantedAuthority
                 List<SimpleGrantedAuthority> authorities = user.roles().stream()
                         .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
                         .toList();

@@ -1,11 +1,11 @@
 package com.digiyak.delivery.internal;
 
 import com.digiyak.delivery.DeliveryModuleApi;
-import com.digiyak.delivery.api.dto.DeliveryDtos.CreateDeliveryRequest;
-import com.digiyak.delivery.api.dto.DeliveryDtos.DeliveryHistoryResponse;
-import com.digiyak.delivery.api.dto.DeliveryDtos.DeliveryResponse;
-import com.digiyak.delivery.api.dto.DeliveryDtos.PaymentLinkResponse;
-import com.digiyak.delivery.api.dto.DeliveryDtos.PublicTrackingResponse;
+import com.digiyak.delivery.api.DeliveryDtos.CreateDeliveryRequest;
+import com.digiyak.delivery.api.DeliveryDtos.DeliveryHistoryResponse;
+import com.digiyak.delivery.api.DeliveryDtos.DeliveryResponse;
+import com.digiyak.delivery.api.DeliveryDtos.PaymentLinkResponse;
+import com.digiyak.delivery.api.DeliveryDtos.PublicTrackingResponse;
 import com.digiyak.delivery.domain.DeliveryEnums.DeliverySource;
 import com.digiyak.delivery.domain.DeliveryEnums.DeliveryStatus;
 import com.digiyak.delivery.domain.DeliveryEvents.DeliveryCancelledEvent;
@@ -31,6 +31,17 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+/**
+ * Core application service for the Delivery module, implementing {@link DeliveryModuleApi}.
+ *
+ * <p><b>Architectural highlights:</b>
+ * <ul>
+ *   <li><b>Idempotency:</b> Checks {@code Idempotency-Key} before inserting so mobile retries return the existing order.</li>
+ *   <li><b>Cross-module boundary:</b> Calls {@link IdentityModuleApi} for user eligibility/no-shows instead of Identity repositories.</li>
+ *   <li><b>Transactional Outbox:</b> Publishes events via {@link ApplicationEventPublisher} inside {@code @Transactional}
+ *       so Spring Modulith persists them in {@code modulith.event_publication} atomically with the DB write.</li>
+ * </ul>
+ */
 @Service
 @Transactional
 public class DeliveryService implements DeliveryModuleApi {
@@ -71,12 +82,14 @@ public class DeliveryService implements DeliveryModuleApi {
         Optional<DeliveryRequest> existing = deliveryRequestRepository.findByIdempotencyKey(idempotencyKey);
         if (existing.isPresent()) {
             DeliveryRequest replay = existing.get();
+            // Prevent one user from probing another user's delivery by guessing their idempotency key
             if (!replay.getRequesterUserId().equals(actor.userId())) {
                 throw ApiException.conflict("IDEMPOTENCY_KEY_CONFLICT", "Idempotency-Key already used by another user");
             }
             return toResponse(replay);
         }
 
+        // Cross-module call via IdentityModuleApi checks active status & anti-ghosting postpaid eligibility
         UserDeliveryEligibility eligibility = identityModuleApi.getDeliveryEligibility(actor.userId());
         if (!eligibility.active()) {
             throw ApiException.forbidden("ACCOUNT_SUSPENDED", "Suspended accounts cannot create deliveries");

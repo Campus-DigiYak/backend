@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 import java.util.UUID;
 
+/** Spring Data JPA repository for {@link DeliveryRequest} inside {@code delivery.internal}. */
 public interface DeliveryRequestRepository extends JpaRepository<DeliveryRequest, UUID> {
 
     Optional<DeliveryRequest> findByTrackingCode(String trackingCode);

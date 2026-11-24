@@ -22,6 +22,19 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
 
+/**
+ * Rich Domain Aggregate for a campus walking delivery in {@code delivery.delivery_requests}.
+ *
+ * <p><b>Why put state transitions inside the entity instead of a service?</b>
+ * Enforcing valid transitions ({@link #markPaidAndDispatch}, {@link #markPickedUp},
+ * {@link #completeWithPin}, {@link #cancel}) inside {@code DeliveryRequest} prevents any caller
+ * from accidentally jumping states (e.g. completing a Pay-After-Delivery order before MoMo payment
+ * or completing a cash order without confirming cash collection).
+ *
+ * <p><b>Concurrency &amp; Idempotency:</b>
+ * Uses {@code @Version} for JPA optimistic locking and a unique {@code idempotencyKey} to prevent
+ * duplicate orders on mobile network retries.
+ */
 @Entity
 @Table(name = "delivery_requests", schema = "delivery")
 public class DeliveryRequest {
@@ -32,6 +45,7 @@ public class DeliveryRequest {
     @Column(name = "tracking_code", nullable = false, unique = true, length = 32)
     private String trackingCode;
 
+    // Logical UUID references across schemas (no cross-schema SQL FKs per Spring Modulith rules)
     @Column(name = "campus_id", nullable = false)
     private UUID campusId;
 
@@ -112,6 +126,7 @@ public class DeliveryRequest {
     @Column(name = "cash_confirmed_at")
     private Instant cashConfirmedAt;
 
+    // All monetary fields are stored in integer pesewas and obey: runnerPayout + platformCut == deliveryFee
     @Column(name = "delivery_fee_pesewas", nullable = false)
     private long deliveryFeePesewas;
 
@@ -121,6 +136,7 @@ public class DeliveryRequest {
     @Column(name = "platform_cut_pesewas", nullable = false)
     private long platformCutPesewas;
 
+    // Two-PIN verification: pickupCode confirms sender handoff; deliveryPin confirms recipient handoff
     @Column(name = "pickup_code", nullable = false, length = 6)
     private String pickupCode;
 
@@ -153,6 +169,7 @@ public class DeliveryRequest {
     protected DeliveryRequest() {
     }
 
+    /** Factory method that computes the 85%/15% two-way split, generates PINs, and sets initial status. */
     public static DeliveryRequest create(
             UUID campusId,
             UUID requesterUserId,
@@ -250,6 +267,13 @@ public class DeliveryRequest {
         };
     }
 
+    /**
+     * Handles payment confirmation in two places of the lifecycle:
+     * <ul>
+     *   <li>Prepaid orders ({@code AWAITING_PAYMENT -> FINDING_RUNNER})</li>
+     *   <li>Pay-After-Delivery handoffs ({@code AWAITING_HANDOFF_PAYMENT -> DELIVERED})</li>
+     * </ul>
+     */
     public DeliveryStatus markPaidAndDispatch() {
         if (this.status == DeliveryStatus.AWAITING_PAYMENT) {
             DeliveryStatus previous = this.status;
@@ -272,6 +296,7 @@ public class DeliveryRequest {
         return previous;
     }
 
+    /** Verifies the sender's 4-digit {@code pickupCode} before transitioning to {@code IN_TRANSIT}. */
     public DeliveryStatus markPickedUp(String providedPickupCode, String photoUrl) {
         if (this.status != DeliveryStatus.RUNNER_ASSIGNED && this.status != DeliveryStatus.AT_PICKUP) {
             throw ApiException.conflict("INVALID_PICKUP_STATE", "Delivery cannot be picked up in status " + this.status);
@@ -296,6 +321,10 @@ public class DeliveryRequest {
         return previous;
     }
 
+    /**
+     * Completes delivery upon verifying the recipient's 4-digit {@code deliveryPin} and payment rules.
+     * Physical cash requires {@code cashCollected == true}; Pay-After-Delivery requires prior MoMo settlement.
+     */
     public DeliveryStatus completeWithPin(String providedPin, boolean cashCollected, String photoUrl) {
         if (this.status != DeliveryStatus.IN_TRANSIT && this.status != DeliveryStatus.AWAITING_HANDOFF_PAYMENT) {
             throw ApiException.conflict("INVALID_COMPLETION_STATE",
@@ -323,6 +352,7 @@ public class DeliveryRequest {
         return previous;
     }
 
+    /** Cancels a delivery only before {@code IN_TRANSIT} or terminal completion states. */
     public DeliveryStatus cancel() {
         if (this.status == DeliveryStatus.DELIVERED || this.status == DeliveryStatus.CANCELLED
                 || this.status == DeliveryStatus.REFUNDED) {
@@ -337,6 +367,7 @@ public class DeliveryRequest {
         return previous;
     }
 
+    /** Returns true only when a prepaid order had already collected funds before cancellation. */
     public boolean requiresRefundOnCancel(DeliveryStatus statusBeforeCancel) {
         return !this.paymentMethod.isPostpaid()
                 && statusBeforeCancel != DeliveryStatus.AWAITING_PAYMENT;

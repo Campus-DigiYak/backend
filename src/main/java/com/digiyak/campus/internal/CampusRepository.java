@@ -1,5 +1,7 @@
 package com.digiyak.campus.internal;
 
-// Clean skeleton interface — implement per docs/team-15-members.md.
+/**
+ * Planned Spring Data JPA repository for {@code campus.campuses} and spatial queries inside {@code campus.internal}.
+ */
 public interface CampusRepository {
 }

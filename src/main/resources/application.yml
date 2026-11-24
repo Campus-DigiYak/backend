@@ -5,7 +5,7 @@ spring:
   application:
     name: digiyak-backend
 
-  # Java 25 Virtual Threads — high-concurrency I/O & SSE streams without thread-pool bottlenecks
+  # Java 25 Virtual Threads: allows thousands of concurrent I/O & SSE streams without OS thread exhaustion
   threads:
     virtual:
       enabled: true
@@ -19,7 +19,9 @@ spring:
       minimum-idle: 5
 
   jpa:
+    # Disable Open-Session-in-View so DB connections are released right after the @Transactional service exits
     open-in-view: false
+    # Hibernate validates JPA entities against Flyway-managed tables instead of auto-altering production schemas
     hibernate:
       ddl-auto: validate
     properties:
@@ -27,6 +29,7 @@ spring:
         jdbc:
           time_zone: UTC
 
+  # Flyway executes versioned SQL migrations per module schema in deterministic order (V1..V7)
   flyway:
     enabled: true
     locations: classpath:db/migration
@@ -39,6 +42,7 @@ spring:
       port: ${REDIS_PORT:6379}
       password: ${REDIS_PASSWORD:}
 
+  # Persists Spring Modulith domain events into modulith.event_publication (Transactional Outbox pattern)
   modulith:
     events:
       jdbc:
@@ -73,5 +77,7 @@ digiyak:
       secret-key: ${PAYSTACK_SECRET_KEY:sk_test_replace_me}
       webhook-secret: ${PAYSTACK_WEBHOOK_SECRET:whsec_replace_me}
   economics:
+    # 1500 bps = 15.00% Digiyak platform fee; remaining 85.00% goes to the student Runner
     default-platform-cut-bps: ${DIGIYAK_DEFAULT_PLATFORM_CUT_BPS:1500}
+    # Runners owe Digiyak 15% on physical cash runs; cash runs pause once debt exceeds GHS 10.00 (1000 pesewas)
     default-runner-cash-credit-limit-pesewas: ${DIGIYAK_DEFAULT_RUNNER_CASH_CREDIT_LIMIT_PESEWAS:1000}

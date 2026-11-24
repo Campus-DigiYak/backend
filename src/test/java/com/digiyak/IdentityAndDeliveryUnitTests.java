@@ -23,6 +23,11 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+/**
+ * Fast pure-JVM unit tests (no Docker/Postgres required) verifying core domain invariants:
+ * JWT signing/verification, Ghana phone normalization, anti-ghosting lockout,
+ * 85%/15% pesewa split, and all three payment mode lifecycles.
+ */
 class IdentityAndDeliveryUnitTests {
 
     private static final String TEST_SECRET = "digiyak-unit-test-secret-key-at-least-64-characters-long-1234567890";
@@ -45,7 +50,7 @@ class IdentityAndDeliveryUnitTests {
         assertThat(parsed.isSuperAdmin()).isFalse();
         assertThat(student.getPhone()).isEqualTo("233241234567");
 
-        // Tampered token must be rejected
+        // Tampered token must be rejected by constant-time HMAC signature verification
         String tampered = token.substring(0, token.length() - 2) + "xx";
         assertThatThrownBy(() -> provider.parseAndVerify(tampered))
                 .isInstanceOf(ApiException.class);
@@ -69,6 +74,7 @@ class IdentityAndDeliveryUnitTests {
         assertThat(buyer.getNoShowCount()).isEqualTo(1);
         assertThat(buyer.isAllowPostpaid()).isTrue();
 
+        // 2nd no-show crosses POSTPAID_LOCKOUT_THRESHOLD and restricts user to MOMO_PREPAID
         buyer.recordNoShow();
         assertThat(buyer.getNoShowCount()).isEqualTo(2);
         assertThat(buyer.isAllowPostpaid()).isFalse();

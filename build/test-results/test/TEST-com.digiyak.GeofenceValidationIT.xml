@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.digiyak.GeofenceValidationIT" tests="1" skipped="1" failures="0" errors="0" timestamp="2026-11-24T23:04:21.636Z" hostname="PC-MUCHACHO" time="0.001">
+  <properties/>
+  <testcase name="rejectsDropoffOutsideCampusPolygon()" classname="com.digiyak.GeofenceValidationIT" time="0.001">
+    <skipped/>
+  </testcase>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

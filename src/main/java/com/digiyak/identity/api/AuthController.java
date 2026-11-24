@@ -1,9 +1,9 @@
 package com.digiyak.identity.api;
 
-import com.digiyak.identity.api.dto.AuthDtos.AuthResponse;
-import com.digiyak.identity.api.dto.AuthDtos.LoginRequest;
-import com.digiyak.identity.api.dto.AuthDtos.RefreshRequest;
-import com.digiyak.identity.api.dto.AuthDtos.RegisterRequest;
+import com.digiyak.identity.api.AuthDtos.AuthResponse;
+import com.digiyak.identity.api.AuthDtos.LoginRequest;
+import com.digiyak.identity.api.AuthDtos.RefreshRequest;
+import com.digiyak.identity.api.AuthDtos.RegisterRequest;
 import com.digiyak.identity.internal.AuthService;
 import com.digiyak.shared.AuthenticatedUser;
 import io.swagger.v3.oas.annotations.Operation;
@@ -17,6 +17,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * Public authentication endpoints ({@code /api/v1/auth/**} permitted in {@code SecurityConfig}).
+ * Handles registration, login, refresh-token rotation, and logout revocation.
+ */
 @RestController
 @RequestMapping("/api/v1/auth")
 @Tag(name = "Authentication", description = "Student, Vendor & Runner registration and JWT auth")

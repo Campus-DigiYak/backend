@@ -1,5 +1,7 @@
 package com.digiyak.campus.domain;
 
-// Clean skeleton class — implement per docs/team-15-members.md.
+/**
+ * Planned JPA entity for {@code campus.campus_landmarks} (hostels, lecture halls, gates, food courts with PostGIS Point).
+ */
 public class CampusLandmark {
 }

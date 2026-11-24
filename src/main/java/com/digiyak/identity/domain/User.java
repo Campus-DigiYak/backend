@@ -19,6 +19,16 @@ import java.util.EnumSet;
 import java.util.Set;
 import java.util.UUID;
 
+/**
+ * Core User aggregate persisted in {@code identity.users} (with roles in {@code identity.user_roles}).
+ *
+ * <p><b>Key domain rules enforced here:</b>
+ * <ul>
+ *   <li>Ghanaian phone numbers are normalized to {@code 233XXXXXXXXX} so {@code 024...} and {@code +23324...} match identically.</li>
+ *   <li>Anti-ghosting guard: reaching {@link #POSTPAID_LOCKOUT_THRESHOLD} (2) no-shows disables postpaid modes ({@code allowPostpaid = false}).</li>
+ *   <li>Multi-role support via {@link ElementCollection} ({@code FetchType.EAGER} so JWT generation always has roles loaded).</li>
+ * </ul>
+ */
 @Entity
 @Table(name = "users", schema = "identity")
 public class User {
@@ -28,6 +38,7 @@ public class User {
     @Id
     private UUID id;
 
+    // Logical reference to campus.campuses.id (null for global SUPER_ADMIN); no cross-schema FK.
     @Column(name = "campus_id")
     private UUID campusId;
 
@@ -56,6 +67,7 @@ public class User {
     @Column(name = "momo_number", length = 20)
     private String momoNumber;
 
+    // Cached Paystack transfer recipient code (invalidated if the user changes their MoMo wallet).
     @Column(name = "paystack_recipient_code", length = 100)
     private String paystackRecipientCode;
 
@@ -131,7 +143,8 @@ public class User {
     }
 
     /**
-     * Normalizes Ghanaian phone formats (024XXXXXXX, +23324XXXXXXX, 23324XXXXXXX) to 233XXXXXXXXX.
+     * Normalizes Ghanaian phone formats ({@code 024XXXXXXX}, {@code +23324XXXXXXX}, {@code 23324XXXXXXX})
+     * into a canonical 12-digit MSISDN ({@code 233XXXXXXXXX}).
      */
     public static String normalizeGhanaPhone(String raw) {
         String digits = raw.replaceAll("[^0-9]", "");
@@ -159,7 +172,7 @@ public class User {
     public void updateMomoWallet(MomoProvider provider, String momoNumber) {
         this.momoProvider = provider;
         this.momoNumber = normalizeGhanaPhone(momoNumber);
-        this.paystackRecipientCode = null; // Re-register Paystack recipient on next payout
+        this.paystackRecipientCode = null; // Force re-registration of Paystack recipient on next payout
     }
 
     public void setBusinessName(String businessName) {
@@ -167,7 +180,7 @@ public class User {
     }
 
     /**
-     * Anti-ghosting guard: 2 or more no-shows restrict the user to MOMO_PREPAID only.
+     * Anti-ghosting guard: 2 or more no-shows restrict the user to {@code MOMO_PREPAID} only.
      */
     public void recordNoShow() {
         this.noShowCount += 1;
@@ -176,91 +189,32 @@ public class User {
         }
     }
 
-    public void setAllowPostpaid(boolean allowPostpaid) {
-        this.allowPostpaid = allowPostpaid;
-    }
+    public void setAllowPostpaid(boolean allowPostpaid) { this.allowPostpaid = allowPostpaid; }
+    public void setVerified(boolean verified) { this.verified = verified; }
+    public void setActive(boolean active) { this.active = active; }
+    public void setCampusId(UUID campusId) { this.campusId = campusId; }
 
-    public void setVerified(boolean verified) {
-        this.verified = verified;
-    }
+    public UUID getId() { return id; }
+    public UUID getCampusId() { return campusId; }
+    public String getEmail() { return email; }
+    public String getPhone() { return phone; }
+    public String getPasswordHash() { return passwordHash; }
+    public String getFullName() { return fullName; }
+    public String getStudentIdNumber() { return studentIdNumber; }
+    public String getBusinessName() { return businessName; }
+    public MomoProvider getMomoProvider() { return momoProvider; }
+    public String getMomoNumber() { return momoNumber; }
+    public String getPaystackRecipientCode() { return paystackRecipientCode; }
+    public int getNoShowCount() { return noShowCount; }
+    public boolean isAllowPostpaid() { return allowPostpaid; }
+    public boolean isVerified() { return verified; }
+    public boolean isActive() { return active; }
 
-    public void setActive(boolean active) {
-        this.active = active;
-    }
-
-    public void setCampusId(UUID campusId) {
-        this.campusId = campusId;
-    }
-
-    public UUID getId() {
-        return id;
-    }
-
-    public UUID getCampusId() {
-        return campusId;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public String getPhone() {
-        return phone;
-    }
-
-    public String getPasswordHash() {
-        return passwordHash;
-    }
-
-    public String getFullName() {
-        return fullName;
-    }
-
-    public String getStudentIdNumber() {
-        return studentIdNumber;
-    }
-
-    public String getBusinessName() {
-        return businessName;
-    }
-
-    public MomoProvider getMomoProvider() {
-        return momoProvider;
-    }
-
-    public String getMomoNumber() {
-        return momoNumber;
-    }
-
-    public String getPaystackRecipientCode() {
-        return paystackRecipientCode;
-    }
-
-    public int getNoShowCount() {
-        return noShowCount;
-    }
-
-    public boolean isAllowPostpaid() {
-        return allowPostpaid;
-    }
-
-    public boolean isVerified() {
-        return verified;
-    }
-
-    public boolean isActive() {
-        return active;
-    }
-
+    /** Returns an unmodifiable view so callers cannot mutate roles without domain methods. */
     public Set<UserRole> getRoles() {
         return Collections.unmodifiableSet(roles);
     }
 
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
-
-    public Instant getUpdatedAt() {
-        return updatedAt;
-    }
+    public Instant getCreatedAt() { return createdAt; }
+    public Instant getUpdatedAt() { return updatedAt; }
 }

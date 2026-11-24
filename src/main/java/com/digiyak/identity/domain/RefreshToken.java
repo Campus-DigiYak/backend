@@ -8,6 +8,13 @@ import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.UUID;
 
+/**
+ * Stored SHA-256 hash of a user's long-lived refresh token in {@code identity.refresh_tokens}.
+ *
+ * <p><b>Why store refresh tokens in the database instead of stateless JWTs?</b>
+ * Short-lived access tokens (15 min) are stateless, while database-backed refresh tokens allow
+ * immediate revocation on logout, account suspension, or token rotation (catching stolen tokens).
+ */
 @Entity
 @Table(name = "refresh_tokens", schema = "identity")
 public class RefreshToken {
@@ -50,27 +57,10 @@ public class RefreshToken {
         this.revoked = true;
     }
 
-    public UUID getId() {
-        return id;
-    }
-
-    public UUID getUserId() {
-        return userId;
-    }
-
-    public String getTokenHash() {
-        return tokenHash;
-    }
-
-    public Instant getExpiresAt() {
-        return expiresAt;
-    }
-
-    public boolean isRevoked() {
-        return revoked;
-    }
-
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
+    public UUID getId() { return id; }
+    public UUID getUserId() { return userId; }
+    public String getTokenHash() { return tokenHash; }
+    public Instant getExpiresAt() { return expiresAt; }
+    public boolean isRevoked() { return revoked; }
+    public Instant getCreatedAt() { return createdAt; }
 }

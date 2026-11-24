@@ -1,5 +1,7 @@
 package com.digiyak.campus.api;
 
-// Clean skeleton class — implement per docs/team-15-members.md.
+/**
+ * Planned public REST controller for campus map data, landmarks, and walking fee quotes ({@code /api/v1/campuses/**}).
+ */
 public class CampusController {
 }

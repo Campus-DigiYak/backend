@@ -13,11 +13,17 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 /**
- * Translates exceptions across all Spring Modulith modules into consistent RFC 7807 ProblemDetail responses.
+ * Global exception translator ({@code @RestControllerAdvice}) across all Spring Modulith modules.
+ *
+ * <p><b>Why RFC 7807 {@link ProblemDetail}?</b>
+ * Spring 6+ / Boot 4 natively supports RFC 7807 ("Problem Details for HTTP APIs"), giving every error
+ * response a consistent JSON shape ({@code type}, {@code title}, {@code status}, {@code detail},
+ * plus custom properties like {@code errorCode} and {@code timestamp}) instead of inconsistent error payloads.
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    /** Handles business/domain exceptions thrown via {@link ApiException}. */
     @ExceptionHandler(ApiException.class)
     public ProblemDetail handleApiException(ApiException ex) {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(ex.getStatus(), ex.getMessage());
@@ -28,13 +34,14 @@ public class GlobalExceptionHandler {
         return problem;
     }
 
+    /** Handles Jakarta Bean Validation failures ({@code @Valid}) and maps each invalid field to its message. */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ProblemDetail handleValidation(MethodArgumentNotValidException ex) {
         Map<String, String> fieldErrors = ex.getBindingResult().getFieldErrors().stream()
                 .collect(Collectors.toMap(
                         FieldError::getField,
                         err -> err.getDefaultMessage() != null ? err.getDefaultMessage() : "Invalid value",
-                        (first, second) -> first
+                        (first, second) -> first // Keep first error if a field fails multiple constraints
                 ));
 
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(
@@ -49,6 +56,7 @@ public class GlobalExceptionHandler {
         return problem;
     }
 
+    /** Fallback handler for invalid method arguments (e.g. malformed UUIDs or currency codes). */
     @ExceptionHandler(IllegalArgumentException.class)
     public ProblemDetail handleIllegalArgument(IllegalArgumentException ex) {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());

@@ -8,6 +8,10 @@ import io.swagger.v3.oas.models.security.SecurityScheme;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+/**
+ * Configures SpringDoc OpenAPI 3.1 / Swagger UI ({@code /swagger-ui.html}) with global JWT Bearer auth
+ * so developers and lecturers can test protected endpoints directly from the browser.
+ */
 @Configuration
 public class OpenApiConfig {
 

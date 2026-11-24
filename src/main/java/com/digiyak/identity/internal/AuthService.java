@@ -1,15 +1,15 @@
 package com.digiyak.identity.internal;
 
 import com.digiyak.identity.IdentityModuleApi;
-import com.digiyak.identity.api.dto.AuthDtos.AppointCampusAdminRequest;
-import com.digiyak.identity.api.dto.AuthDtos.AuditLogResponse;
-import com.digiyak.identity.api.dto.AuthDtos.AuthResponse;
-import com.digiyak.identity.api.dto.AuthDtos.LoginRequest;
-import com.digiyak.identity.api.dto.AuthDtos.OptInVendorRequest;
-import com.digiyak.identity.api.dto.AuthDtos.OverridePostpaidRequest;
-import com.digiyak.identity.api.dto.AuthDtos.RegisterRequest;
-import com.digiyak.identity.api.dto.AuthDtos.UpdateMomoRequest;
-import com.digiyak.identity.api.dto.AuthDtos.UserProfileResponse;
+import com.digiyak.identity.api.AuthDtos.AppointCampusAdminRequest;
+import com.digiyak.identity.api.AuthDtos.AuditLogResponse;
+import com.digiyak.identity.api.AuthDtos.AuthResponse;
+import com.digiyak.identity.api.AuthDtos.LoginRequest;
+import com.digiyak.identity.api.AuthDtos.OptInVendorRequest;
+import com.digiyak.identity.api.AuthDtos.OverridePostpaidRequest;
+import com.digiyak.identity.api.AuthDtos.RegisterRequest;
+import com.digiyak.identity.api.AuthDtos.UpdateMomoRequest;
+import com.digiyak.identity.api.AuthDtos.UserProfileResponse;
 import com.digiyak.identity.domain.AdminAuditLog;
 import com.digiyak.identity.domain.RefreshToken;
 import com.digiyak.identity.domain.User;
@@ -25,6 +25,13 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.UUID;
 
+/**
+ * Core application service for the Identity module.
+ *
+ * <p>Lives inside {@code identity.internal} so no external module can call it directly; instead,
+ * other modules depend on its public {@link IdentityModuleApi} interface.
+ * {@code @Transactional} ensures registration, token rotation, and audit logging commit atomically.
+ */
 @Service
 @Transactional
 public class AuthService implements IdentityModuleApi {
@@ -49,6 +56,7 @@ public class AuthService implements IdentityModuleApi {
         this.jwtTokenProvider = jwtTokenProvider;
     }
 
+    /** Registers a student account, hashes the password with BCrypt, and issues initial JWT + refresh tokens. */
     public AuthResponse register(RegisterRequest req) {
         String normalizedEmail = req.email().trim().toLowerCase();
         String normalizedPhone = User.normalizeGhanaPhone(req.phone());
@@ -81,6 +89,7 @@ public class AuthService implements IdentityModuleApi {
         return issueTokenPair(user);
     }
 
+    /** Authenticates by email or Ghanaian phone number and rejects suspended accounts. */
     public AuthResponse login(LoginRequest req) {
         String id = req.identifier().trim();
         User user = (id.contains("@")
@@ -98,6 +107,11 @@ public class AuthService implements IdentityModuleApi {
         return issueTokenPair(user);
     }
 
+    /**
+     * Implements Refresh Token Rotation:
+     * validates the SHA-256 hash of the incoming refresh token, revokes it immediately (single-use),
+     * and issues a brand-new access + refresh token pair.
+     */
     public AuthResponse refresh(String rawRefreshToken) {
         String hash = jwtTokenProvider.hashRefreshToken(rawRefreshToken);
         RefreshToken existing = refreshTokenRepository.findByTokenHash(hash)
@@ -134,6 +148,7 @@ public class AuthService implements IdentityModuleApi {
         return UserProfileResponse.from(userRepository.save(user));
     }
 
+    /** Grants {@code RUNNER} role only after the student links a MoMo wallet for payouts. */
     public UserProfileResponse optInRunner(UUID userId) {
         User user = requireUser(userId);
         if (user.getMomoProvider() == null || user.getMomoNumber() == null) {
@@ -282,6 +297,7 @@ public class AuthService implements IdentityModuleApi {
     private AuthResponse issueTokenPair(User user) {
         String accessToken = jwtTokenProvider.createAccessToken(user);
         String rawRefresh = jwtTokenProvider.generateRawRefreshToken();
+        // Store only the SHA-256 hash in the DB so raw tokens cannot be stolen from DB backups
         String refreshHash = jwtTokenProvider.hashRefreshToken(rawRefresh);
         Instant refreshExpiry = Instant.now().plusSeconds(jwtTokenProvider.getRefreshExpirationSeconds());
 

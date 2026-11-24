@@ -1,6 +1,6 @@
 package com.digiyak.delivery.internal;
 
-import com.digiyak.delivery.api.dto.DeliveryDtos.PaymentLinkResponse;
+import com.digiyak.delivery.api.DeliveryDtos.PaymentLinkResponse;
 import com.digiyak.delivery.domain.DeliveryEnums.PayLinkStatus;
 import com.digiyak.delivery.domain.DeliveryRequest;
 import com.digiyak.delivery.domain.PaymentLink;
@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.UUID;
 
+/** Internal service managing lifecycle and guest checkout lookups for {@link PaymentLink}s. */
 @Service
 @Transactional
 public class PaymentLinkService {
@@ -26,6 +27,7 @@ public class PaymentLinkService {
         this.deliveryRequestRepository = deliveryRequestRepository;
     }
 
+    /** Returns an existing payment link for a delivery or generates a fresh 30-minute link. */
     public PaymentLink getOrCreateForDelivery(DeliveryRequest request) {
         return paymentLinkRepository.findByDeliveryRequestId(request.getId())
                 .orElseGet(() -> paymentLinkRepository.save(
@@ -37,6 +39,7 @@ public class PaymentLinkService {
                 ));
     }
 
+    /** Fetches public summary for {@code /api/v1/pay/{shortCode}}, enforcing link expiration. */
     @Transactional(readOnly = true)
     public PaymentLinkResponse getGuestCheckoutDetails(String shortCode) {
         PaymentLink link = paymentLinkRepository.findByShortCode(shortCode)
