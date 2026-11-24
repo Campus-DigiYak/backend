@@ -26,8 +26,11 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
- * Standard RFC 7519 HS256 JWT signer/verifier + SHA-256 refresh token generator.
- * Zero extra third-party JWT library overhead; uses constant-time HMAC signature checks.
+ * Standard RFC 7519 HS256 JWT signer/verifier + SHA-256 refresh token helper.
+ *
+ * <p><b>Why implement HS256 directly using JDK {@link Mac}?</b>
+ * Zero external JWT dependency overhead, full transparency over header/claims/signature layout,
+ * and constant-time comparison ({@link MessageDigest#isEqual}) to prevent timing side-channel attacks.
  */
 @Component
 public class JwtTokenProvider {
@@ -49,6 +52,7 @@ public class JwtTokenProvider {
             @Value("${digiyak.jwt.refresh-expiration-seconds:604800}") long refreshExpirationSeconds,
             ObjectMapper objectMapper
     ) {
+        // HS256 requires at least 256 bits (32 bytes) of key material to resist brute-force attacks
         if (secret == null || secret.length() < 32) {
             throw new IllegalArgumentException("digiyak.jwt.secret must be at least 32 characters");
         }
@@ -58,6 +62,7 @@ public class JwtTokenProvider {
         this.objectMapper = objectMapper;
     }
 
+    /** Builds a signed {@code header.payload.signature} JWT containing user ID, campusId, email, and roles. */
     public String createAccessToken(User user) {
         Instant now = Instant.now();
         Instant exp = now.plusSeconds(accessExpirationSeconds);
@@ -81,6 +86,7 @@ public class JwtTokenProvider {
         return signingInput + "." + signature;
     }
 
+    /** Verifies signature (constant-time) and expiration before extracting the {@link AuthenticatedUser}. */
     public AuthenticatedUser parseAndVerify(String token) {
         if (token == null || token.isBlank()) {
             throw ApiException.unauthorized("Missing bearer token");
@@ -99,6 +105,7 @@ public class JwtTokenProvider {
             throw ApiException.unauthorized("Invalid JWT signature encoding");
         }
 
+        // Constant-time comparison prevents byte-by-byte signature guessing via response timing
         if (!MessageDigest.isEqual(expectedSig, actualSig)) {
             throw ApiException.unauthorized("Invalid JWT signature");
         }
@@ -134,12 +141,14 @@ public class JwtTokenProvider {
         }
     }
 
+    /** Generates 384 bits of cryptographically random opaque token material for refresh tokens. */
     public String generateRawRefreshToken() {
         byte[] bytes = new byte[48];
         SECURE_RANDOM.nextBytes(bytes);
         return URL_ENCODER.encodeToString(bytes);
     }
 
+    /** Hashes high-entropy refresh tokens with SHA-256 before DB storage (fast &amp; irreversible). */
     public String hashRefreshToken(String rawToken) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
@@ -150,13 +159,8 @@ public class JwtTokenProvider {
         }
     }
 
-    public long getAccessExpirationSeconds() {
-        return accessExpirationSeconds;
-    }
-
-    public long getRefreshExpirationSeconds() {
-        return refreshExpirationSeconds;
-    }
+    public long getAccessExpirationSeconds() { return accessExpirationSeconds; }
+    public long getRefreshExpirationSeconds() { return refreshExpirationSeconds; }
 
     private byte[] sign(String signingInput) {
         try {

@@ -17,6 +17,18 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
 
+/**
+ * Spring Security 7 / Boot 4 stateless JWT security configuration.
+ *
+ * <p><b>Key security decisions:</b>
+ * <ul>
+ *   <li><b>Stateless sessions:</b> No server-side HTTP session; every request authenticates via Bearer JWT.</li>
+ *   <li><b>CSRF disabled:</b> Safe for stateless Bearer-header APIs (not cookie-based auth).</li>
+ *   <li><b>Public vs Protected routes:</b> Auth, guest payment links, public tracking, campus read APIs,
+ *       webhooks, and Swagger UI are open; admin routes require {@code CAMPUS_ADMIN}/{@code SUPER_ADMIN}.</li>
+ *   <li><b>{@code @EnableMethodSecurity}:</b> Enables {@code @PreAuthorize} annotations on controllers.</li>
+ * </ul>
+ */
 @Configuration
 @EnableMethodSecurity
 public class SecurityConfig {
@@ -45,6 +57,7 @@ public class SecurityConfig {
                 .build();
     }
 
+    /** BCrypt with strength 12 balances brute-force resistance against login latency. */
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder(12);

@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.UUID;
 
+/** Spring Data JPA repository for {@link AdminAuditLog} inside {@code identity.internal}. */
 public interface AdminAuditLogRepository extends JpaRepository<AdminAuditLog, UUID> {
 
     Page<AdminAuditLog> findAllByOrderByCreatedAtDesc(Pageable pageable);

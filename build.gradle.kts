@@ -7,16 +7,17 @@ plugins {
 group = "com.digiyak"
 version = "0.1.0-SNAPSHOT"
 
+// Target Java 25 LTS bytecode (uses --release 25 so both JDK 25 in CI/Docker and newer local JDKs can compile)
 java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(25)
-    }
+    sourceCompatibility = JavaVersion.VERSION_25
+    targetCompatibility = JavaVersion.VERSION_25
 }
 
 repositories {
     mavenCentral()
 }
 
+// Import Spring Modulith BOM so core, jpa, and test starters stay on matching 2.0.0 versions
 dependencyManagement {
     imports {
         mavenBom("org.springframework.modulith:spring-modulith-bom:2.0.0")
@@ -52,6 +53,8 @@ dependencies {
 }
 
 tasks.withType<JavaCompile> {
+    options.release.set(25)
+    // Treat all javac warnings (e.g. raw types, unchecked casts, deprecations) as build errors
     options.compilerArgs.addAll(listOf("-Xlint:all", "-Xlint:-processing", "-Werror"))
 }
 

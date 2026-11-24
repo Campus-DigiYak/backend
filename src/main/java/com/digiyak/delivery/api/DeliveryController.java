@@ -1,11 +1,11 @@
 package com.digiyak.delivery.api;
 
-import com.digiyak.delivery.api.dto.DeliveryDtos.CancelDeliveryRequest;
-import com.digiyak.delivery.api.dto.DeliveryDtos.CreateDeliveryRequest;
-import com.digiyak.delivery.api.dto.DeliveryDtos.DeliveryHistoryResponse;
-import com.digiyak.delivery.api.dto.DeliveryDtos.DeliveryResponse;
-import com.digiyak.delivery.api.dto.DeliveryDtos.PaymentLinkResponse;
-import com.digiyak.delivery.api.dto.DeliveryDtos.PublicTrackingResponse;
+import com.digiyak.delivery.api.DeliveryDtos.CancelDeliveryRequest;
+import com.digiyak.delivery.api.DeliveryDtos.CreateDeliveryRequest;
+import com.digiyak.delivery.api.DeliveryDtos.DeliveryHistoryResponse;
+import com.digiyak.delivery.api.DeliveryDtos.DeliveryResponse;
+import com.digiyak.delivery.api.DeliveryDtos.PaymentLinkResponse;
+import com.digiyak.delivery.api.DeliveryDtos.PublicTrackingResponse;
 import com.digiyak.delivery.internal.DeliveryService;
 import com.digiyak.shared.AuthenticatedUser;
 import io.swagger.v3.oas.annotations.Operation;
@@ -28,6 +28,12 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * REST endpoints for creating, tracking, paying for, and cancelling campus walking deliveries.
+ *
+ * <p>Note: {@code POST /api/v1/deliveries} requires an {@code Idempotency-Key} header so flaky
+ * campus mobile networks can safely retry requests without creating duplicate orders.
+ */
 @RestController
 @RequestMapping("/api/v1/deliveries")
 @Tag(name = "Deliveries", description = "Campus walking delivery requests across MoMo Prepaid, Pay-After-Delivery & Physical Cash")

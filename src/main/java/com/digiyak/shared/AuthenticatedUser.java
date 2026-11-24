@@ -4,8 +4,13 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * Immutable security principal exposed to all domain controllers after JWT authentication.
- * Note: {@code campusId} may be {@code null} for global {@code SUPER_ADMIN} accounts.
+ * Immutable security principal injected into controllers via {@code @AuthenticationPrincipal}
+ * after {@code JwtAuthenticationFilter} verifies the incoming Bearer JWT.
+ *
+ * <p><b>Multi-Campus Tenant Isolation:</b>
+ * {@code campusId} identifies which university campus a student, runner, vendor, or {@code CAMPUS_ADMIN}
+ * belongs to. Global {@code SUPER_ADMIN} accounts have {@code campusId == null} so they can govern
+ * all campuses across Ghana.
  */
 public record AuthenticatedUser(
         UUID userId,
@@ -35,8 +40,11 @@ public record AuthenticatedUser(
     }
 
     /**
-     * Enforces multi-campus tenant isolation: SUPER_ADMIN can manage any campus,
-     * whereas CAMPUS_ADMIN can only manage their assigned campus.
+     * Enforces multi-campus tenant isolation:
+     * <ul>
+     *   <li>{@code SUPER_ADMIN} can manage any campus.</li>
+     *   <li>{@code CAMPUS_ADMIN} can only manage records belonging to their own {@code campusId}.</li>
+     * </ul>
      */
     public boolean canManageCampus(UUID targetCampusId) {
         if (isSuperAdmin()) {

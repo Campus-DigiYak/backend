@@ -1,6 +1,6 @@
 package com.digiyak.delivery.api;
 
-import com.digiyak.delivery.api.dto.DeliveryDtos.PaymentLinkResponse;
+import com.digiyak.delivery.api.DeliveryDtos.PaymentLinkResponse;
 import com.digiyak.delivery.internal.PaymentLinkService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -9,6 +9,10 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * Public guest checkout endpoint ({@code /api/v1/pay/**} is permitted in {@code SecurityConfig}).
+ * Enables zero-login buyers on WhatsApp or recipients at handoff to view and pay delivery fees.
+ */
 @RestController
 @RequestMapping("/api/v1/pay")
 @Tag(name = "WhatsApp Payment Links", description = "Zero-login guest MoMo checkout for vendor links & Pay-After-Delivery handoffs")

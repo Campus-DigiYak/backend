@@ -1,5 +1,7 @@
 package com.digiyak.campus.domain;
 
-// Clean skeleton class — implement per docs/team-15-members.md.
+/**
+ * Planned JPA entity for {@code campus.campuses} (PostGIS boundary polygon, platform cut bps, cash credit limit).
+ */
 public class Campus {
 }

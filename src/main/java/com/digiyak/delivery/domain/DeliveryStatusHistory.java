@@ -11,6 +11,10 @@ import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.UUID;
 
+/**
+ * Append-only status transition timeline entry persisted in {@code delivery.delivery_status_history}.
+ * Provides an explainable audit trail of every state change, who triggered it, and why.
+ */
 @Entity
 @Table(name = "delivery_status_history", schema = "delivery")
 public class DeliveryStatusHistory {

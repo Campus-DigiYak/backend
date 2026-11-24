@@ -1,9 +1,9 @@
 package com.digiyak.identity.api;
 
-import com.digiyak.identity.api.dto.AuthDtos.AppointCampusAdminRequest;
-import com.digiyak.identity.api.dto.AuthDtos.AuditLogResponse;
-import com.digiyak.identity.api.dto.AuthDtos.OverridePostpaidRequest;
-import com.digiyak.identity.api.dto.AuthDtos.UserProfileResponse;
+import com.digiyak.identity.api.AuthDtos.AppointCampusAdminRequest;
+import com.digiyak.identity.api.AuthDtos.AuditLogResponse;
+import com.digiyak.identity.api.AuthDtos.OverridePostpaidRequest;
+import com.digiyak.identity.api.AuthDtos.UserProfileResponse;
 import com.digiyak.identity.internal.AuthService;
 import com.digiyak.shared.AuthenticatedUser;
 import io.swagger.v3.oas.annotations.Operation;
@@ -27,6 +27,13 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.UUID;
 
+/**
+ * Global multi-campus governance endpoints locked down to {@code SUPER_ADMIN}.
+ *
+ * <p>Defense-in-depth: protected both by URL rules in {@code SecurityConfig} and by
+ * {@code @PreAuthorize("hasRole('SUPER_ADMIN')")} at the controller level, and every mutation
+ * writes an immutable audit log entry with the caller's IP address.
+ */
 @RestController
 @RequestMapping("/api/v1/super-admin")
 @PreAuthorize("hasRole('SUPER_ADMIN')")

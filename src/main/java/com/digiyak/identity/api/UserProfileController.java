@@ -1,8 +1,8 @@
 package com.digiyak.identity.api;
 
-import com.digiyak.identity.api.dto.AuthDtos.OptInVendorRequest;
-import com.digiyak.identity.api.dto.AuthDtos.UpdateMomoRequest;
-import com.digiyak.identity.api.dto.AuthDtos.UserProfileResponse;
+import com.digiyak.identity.api.AuthDtos.OptInVendorRequest;
+import com.digiyak.identity.api.AuthDtos.UpdateMomoRequest;
+import com.digiyak.identity.api.AuthDtos.UserProfileResponse;
 import com.digiyak.identity.internal.AuthService;
 import com.digiyak.shared.AuthenticatedUser;
 import io.swagger.v3.oas.annotations.Operation;
@@ -16,6 +16,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * Self-service endpoints for an already authenticated student ({@code /api/v1/me}).
+ * Allows updating MoMo payout details and opting into {@code RUNNER} or {@code VENDOR_PARTNER} roles
+ * without creating a separate account.
+ */
 @RestController
 @RequestMapping("/api/v1/me")
 @Tag(name = "User Profile", description = "Self-service student profile, MoMo wallet & role activation")
