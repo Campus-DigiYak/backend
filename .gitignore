@@ -5,9 +5,8 @@
 
 # Java / Gradle
 .gradle/
-gradle/
-backend/.gradle/
 build/
+bin/
 out/
 *.class
 *.jar

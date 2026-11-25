@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.digiyak.RunnerClaimConcurrencyIT" tests="1" skipped="1" failures="0" errors="0" timestamp="2026-11-24T23:04:28.448Z" hostname="PC-MUCHACHO" time="0.0">
-  <properties/>
-  <testcase name="verifiesSingleWinnerAcrossConcurrentVirtualThreads()" classname="com.digiyak.RunnerClaimConcurrencyIT" time="0.0">
-    <skipped/>
-  </testcase>
-  <system-out><![CDATA[]]></system-out>
-  <system-err><![CDATA[]]></system-err>
-</testsuite>
