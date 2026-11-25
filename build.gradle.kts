@@ -7,7 +7,7 @@ plugins {
 group = "com.digiyak"
 version = "0.1.0-SNAPSHOT"
 
-// Target Java 25 LTS bytecode (uses --release 25 so both JDK 25 in CI/Docker and newer local JDKs can compile)
+// Target Java 25 bytecode (uses --release 25 so JDK 25+ can compile — JDK 26 works fine)
 java {
     sourceCompatibility = JavaVersion.VERSION_25
     targetCompatibility = JavaVersion.VERSION_25
