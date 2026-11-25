@@ -1,6 +1,6 @@
 plugins {
     java
-    id("org.springframework.boot") version "4.0.0"
+    id("org.springframework.boot") version "4.2.0"
     id("io.spring.dependency-management") version "1.1.7"
 }
 
@@ -17,15 +17,15 @@ repositories {
     mavenCentral()
 }
 
-// Import Spring Modulith BOM so core, jpa, and test starters stay on matching 2.0.0 versions
+// Import Spring Modulith BOM so core, jpa, and test starters stay on matching 2.2.0 versions
 dependencyManagement {
     imports {
-        mavenBom("org.springframework.modulith:spring-modulith-bom:2.0.0")
+        mavenBom("org.springframework.modulith:spring-modulith-bom:2.2.0")
     }
 }
 
 dependencies {
-    // Spring Boot 4 Core Starters (Java 25 + Virtual Threads)
+    // Spring Boot 4.2 Core Starters (Java 25 + Virtual Threads)
     implementation("org.springframework.boot:spring-boot-starter-webmvc")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
@@ -34,7 +34,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-flyway")
 
-    // Spring Modulith 2 (Strict Module Boundaries + Transactional Outbox)
+    // Spring Modulith 2.2 (Strict Module Boundaries + Transactional Outbox)
     implementation("org.springframework.modulith:spring-modulith-starter-core")
     implementation("org.springframework.modulith:spring-modulith-starter-jpa")
 
@@ -43,8 +43,8 @@ dependencies {
     implementation("org.hibernate.orm:hibernate-spatial")
     runtimeOnly("org.postgresql:postgresql")
 
-    // OpenAPI 3.1 / Swagger UI (Spring Boot 4 compatible)
-    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.0")
+    // OpenAPI 3.1 / Swagger UI (Spring Boot 4.2 compatible)
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.2.0")
 
     // Testing
     testImplementation("org.springframework.boot:spring-boot-starter-test")
